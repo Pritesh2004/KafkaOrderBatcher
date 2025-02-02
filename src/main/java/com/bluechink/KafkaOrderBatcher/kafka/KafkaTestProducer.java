@@ -14,18 +14,17 @@ import java.util.Properties;
 public class KafkaTestProducer {
 
     public static void main(String[] args) {
-        // Kafka producer configuration
+
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);  // We'll serialize the Order to a JSON string
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(props);
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        // Send 10 test orders
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 41; i <= 4000; i++) {
             Order order = new Order();
             order.setOrderId(String.valueOf(i));
             order.setCustomerId("Customer " + i);
@@ -34,10 +33,8 @@ public class KafkaTestProducer {
             order.setOrderStatus("PENDING");
 
             try {
-                // Convert the Order object to JSON string
                 String orderJson = objectMapper.writeValueAsString(order);
 
-                // Send the Order message as a JSON string to the Kafka topic
                 producer.send(new ProducerRecord<>("orders", String.valueOf(i), orderJson));
                 System.out.println("Sent order: " + orderJson);
             } catch (JsonProcessingException e) {
@@ -45,7 +42,6 @@ public class KafkaTestProducer {
             }
         }
 
-        // Close the producer after sending all messages
         producer.close();
     }
 }

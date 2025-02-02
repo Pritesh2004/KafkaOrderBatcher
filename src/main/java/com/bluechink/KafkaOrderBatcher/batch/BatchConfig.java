@@ -16,20 +16,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 @Configuration
 @EnableBatchProcessing
 public class BatchConfig {
 
+    private final Queue<Order> orderQueue = new LinkedList<>();
+
+
     private final OrderRepository orderRepository;
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
-    private final EntityManagerFactory entityManagerFactory;
 
-    public BatchConfig(OrderRepository orderRepository, JobRepository jobRepository, PlatformTransactionManager transactionManager, EntityManagerFactory entityManagerFactory) {
+    public BatchConfig(OrderRepository orderRepository, JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         this.orderRepository = orderRepository;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
-        this.entityManagerFactory = entityManagerFactory;
     }
 
     @Bean
@@ -45,22 +49,29 @@ public class BatchConfig {
                 .<Order, Order>chunk(10, transactionManager)
                 .reader(orderReader())
                 .processor(orderProcessor())
-                .writer(orderWriter()) // Spring will handle this bean automatically
+                .writer(orderWriter())
+                .faultTolerant()  //Ensures errors don't stop the batch
                 .build();
     }
 
     @Bean
-    public ListItemReader<Order> orderReader() {
-        return new ListItemReader<>(orderRepository.findAll());
+    public OrderReader orderReader() {
+        return new OrderReader(orderQueue);
     }
 
     @Bean
     public ItemProcessor<Order, Order> orderProcessor() {
-        return order -> order; // Pass-through processor, customize if needed
+        return order -> order;
     }
 
     @Bean
     public OrderWriter orderWriter() {
-        return new OrderWriter(orderRepository); // Using the constructor directly
+        return new OrderWriter(orderRepository);
+    }
+
+    public void addOrderToQueue(Queue<Order> orders) {
+        synchronized (orderQueue) {
+            orderQueue.addAll(orders);
+        }
     }
 }

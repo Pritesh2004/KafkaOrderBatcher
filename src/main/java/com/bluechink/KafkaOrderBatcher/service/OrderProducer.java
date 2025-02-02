@@ -22,10 +22,8 @@ public class OrderProducer {
 
     public void sendOrder(Order order) {
         try {
-            // Convert order object to JSON string
             String orderJson = objectMapper.writeValueAsString(order);
 
-            // Send order message to Kafka topic
             kafkaTemplate.send(TOPIC, order.getOrderId(), orderJson);
 
             System.out.println("Order sent to Kafka: " + orderJson);
