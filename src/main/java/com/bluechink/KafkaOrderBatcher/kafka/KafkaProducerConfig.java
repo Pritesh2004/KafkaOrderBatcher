@@ -1,4 +1,4 @@
-package com.bluechink.KafkaOrderBatcher.config;
+package com.bluechink.KafkaOrderBatcher.kafka;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
